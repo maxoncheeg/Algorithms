@@ -1,71 +1,63 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using PrefixTree.Models;
-using PrefixTree.Models.Abstract;
 
-void FirstQuest()
+void GenerateWords(int symbolsAmount)
 {
-    IArrayPrefixNode node = new ArrayPrefixNode();
-    
-    List<string> words = new List<string>()
+    int minLength = 10, maxLength = 35;
+    var random = new Random();
+    using var writer = new StreamWriter($"output{symbolsAmount}.txt", false);
+
+    while (symbolsAmount > 0)
     {
-        "abc",
-        "abd",
-        "abdo",
-        "abdc",
-        "abdp",
-        "ab"
-    };
-    
-    foreach (var word in words)
-    {
-        node.Insert(word);
+        int length = (symbolsAmount <= maxLength) ? symbolsAmount : random.Next(minLength, maxLength);
+
+        for (int i = 0; i < length; i++)
+            writer.Write((char)random.Next(97, 123));
+
+        writer.WriteLine();
+        symbolsAmount -= length;
     }
-
-    node.ConsolePrint();
-    var stats = node.CalculateStats();
-    stats.SymbolsAmount = words.Sum(word => word.Length);
-
-    Console.WriteLine($"Количество символов: {stats.SymbolsAmount}");
-    Console.WriteLine($"Количество слов: {stats.WordsAmount}");
-    Console.WriteLine($"Количество ветвлений: {stats.BranchingAmount}");
-    Console.WriteLine($"Количество внутренних узлов: {stats.InnerNodesAmount}");
-    Console.WriteLine($"Среднее кол-во веток в ветвлениях: {stats.AverageBranchAmount}");
 }
 
-void SecondQuest()
+void Test(int symbolsAmount)
 {
-    IPrefixNode node = new PrefixNode();
+    var node = new PrefixNode();
+    //var node = new ArrayPrefixNode();
 
-    List<string> words = new List<string>()
-    {
-        "abc",
-        "abd",
-        "abdo",
-        "abdc",
-        "abdp",
-        "ab"
-    };
+    using var reader = new StreamReader($"output{symbolsAmount}.txt");
+    long totalTime = 0;
+    Stopwatch stopwatch = new Stopwatch();
+    var stats = new PrefixTreeStats();
 
-    foreach (var word in words)
+    while (!reader.EndOfStream)
     {
-        node.Insert(word);
+        string? line = reader.ReadLine();
+
+        if (!string.IsNullOrEmpty(line))
+        {
+            stats.SymbolsAmount += line.Length;
+        
+            stopwatch.Start();
+            node.Insert(line);
+            stopwatch.Stop();
+        
+            //totalTime += stopwatch.ElapsedMilliseconds;
+            //stopwatch.Reset();
+        }
     }
-
-    node.ConsolePrint();
-    var stats = node.CalculateStats();
-    stats.SymbolsAmount = words.Sum(word => word.Length);
-
-    Console.WriteLine($"Количество символов: {stats.SymbolsAmount}");
-    Console.WriteLine($"Количество слов: {stats.WordsAmount}");
-    Console.WriteLine($"Количество ветвлений: {stats.BranchingAmount}");
-    Console.WriteLine($"Количество внутренних узлов: {stats.InnerNodesAmount}");
-    Console.WriteLine($"Среднее кол-во веток в ветвлениях: {stats.AverageBranchAmount}");
-
+    Console.WriteLine($"\n ВРЕМЯ: {stopwatch.ElapsedMilliseconds} | СИМВОЛЫ: {stats.SymbolsAmount}\n");
+//node.ConsolePrint();
+    stats = node.CalculateStats(stats);
+    Process proc = Process.GetCurrentProcess();
+    Console.WriteLine($" Память: {(double)proc.PrivateMemorySize64 / 8 / 1024 / 1024 } MB");
+    Console.WriteLine($" Количество слов: {stats.WordsAmount}");
+    Console.WriteLine($" Количество ветвлений: {stats.BranchingAmount}");
+    Console.WriteLine($" Количество внутренних узлов: {stats.InnerNodesAmount}");
+    Console.WriteLine($" Среднее кол-во веток в ветвлениях: {stats.AverageBranchAmount}");
 }
 
 
-
-FirstQuest();
-
-
+//GenerateWords(100000);
+Test(100000);
